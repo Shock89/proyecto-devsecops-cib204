@@ -9,9 +9,9 @@ services:
     ports:
       - "3000:3000"
     environment:
-      # El control de acceso arranca APAGADO (rama insegura). Se activa en la
+      # Control de acceso ACTIVO por defecto (Fase 2).
       # Seccion de IAM poniendo AUTH_ENABLED=true.
-      - AUTH_ENABLED=${AUTH_ENABLED:-false}
+      - AUTH_ENABLED=${AUTH_ENABLED:-true}
       - KEYCLOAK_URL=http://keycloak:8080
       - KEYCLOAK_REALM=appmovil
     restart: unless-stopped
