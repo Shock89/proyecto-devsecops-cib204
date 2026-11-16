@@ -15,19 +15,23 @@
 
 const express = require('express');
 const cors = require('cors');
-const { exec } = require('child_process');
+const helmet = require('helmet');
+const { execFile } = require('child_process');
 const cifrado = require('./cifrado');
 const db = require('./db');
 const config = require('./config');
 const { requiereAuth } = require('./auth');
 
+// API sin cookies de sesion: la identidad viaja en el encabezado Authorization (JWT), por lo que no aplica CSRF.
+// nosemgrep: javascript.express.security.audit.express-check-csurf-middleware-usage
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: '10kb' }));
 
 // [VULN-5] CORS totalmente abierto: cualquier origen puede consumir la API.
 //   Lo reporta OWASP ZAP (DAST) y Semgrep. La solucion es restringir a los
 //   origenes de confianza.  CWE-942 (Overly Permissive CORS)
-app.use(cors());
+app.use(helmet());
+app.use(cors({ origin: config.ORIGEN_PERMITIDO }));
 
 // [VULN-6] Faltan cabeceras de seguridad (no se usa Helmet):
 //   sin Content-Security-Policy, X-Content-Type-Options, etc.
@@ -38,7 +42,7 @@ app.use(cors());
 const llaves = cifrado.generarLlaves();
 
 app.get('/salud', (req, res) => {
-  res.json({ estado: 'ok', version: 'inseguro-1.0' });
+  res.json({ estado: 'ok', version: '1.0' });
 });
 
 app.get('/llave', (req, res) => {
@@ -51,22 +55,28 @@ app.post('/cifrar', requiereAuth, (req, res) => {
     //   Un cuerpo enorme o de tipo inesperado puede tumbar el servicio.
     //   CWE-20 (Improper Input Validation)
     const texto = req.body.texto;
+    if (typeof texto !== 'string' || texto.length < 1 || texto.length > 180) {
+      return res.status(400).json({ error: 'Entrada invalida' });
+    }
     const resultado = cifrado.cifrar(texto, llaves.publicKey);
     res.json({ cifrado: resultado });
   } catch (e) {
     // [VULN-8] Exposicion de detalles internos: se devuelve el stack al cliente.
     //   CWE-209 (Information Exposure Through an Error Message)
-    res.status(500).json({ error: e.message, stack: e.stack });
+    res.status(500).json({ error: 'Error interno' });
   }
 });
 
 app.post('/descifrar', requiereAuth, (req, res) => {
   try {
     const cifradoTxt = req.body.cifrado;
+    if (typeof cifradoTxt !== 'string' || cifradoTxt.length < 1 || cifradoTxt.length > 1024) {
+      return res.status(400).json({ error: 'Entrada invalida' });
+    }
     const resultado = cifrado.descifrar(cifradoTxt, llaves.privateKey);
     res.json({ descifrado: resultado });
   } catch (e) {
-    res.status(500).json({ error: e.message, stack: e.stack });
+    res.status(400).json({ error: 'No se pudo descifrar' });
   }
 });
 
@@ -82,13 +92,11 @@ app.get('/buscar', (req, res) => {
 //   Lo detectan Semgrep y CodeQL (js/code-injection).
 //   CWE-95 (Eval Injection)
 app.post('/calcular', (req, res) => {
-  const expresion = req.body.expresion || '0';
-  try {
-    const resultado = eval(expresion);
-    res.json({ resultado });
-  } catch (e) {
-    res.status(400).json({ error: 'Expresion invalida' });
+  const nums = Array.isArray(req.body.numeros) ? req.body.numeros : [];
+  if (!nums.every((n) => typeof n === 'number')) {
+    return res.status(400).json({ error: 'Entrada invalida' });
   }
+  res.json({ resultado: nums.reduce((a, b) => a + b, 0) });
 });
 
 // [VULN-10] Inyeccion de comandos del sistema operativo.
@@ -97,8 +105,11 @@ app.post('/calcular', (req, res) => {
 //   CWE-78 (OS Command Injection)
 app.get('/diagnostico', (req, res) => {
   const host = req.query.host || '127.0.0.1';
-  exec('ping -c 1 ' + host, (err, stdout, stderr) => {
-    res.json({ salida: stdout, error: stderr });
+  if (!/^[a-zA-Z0-9.-]{1,64}$/.test(host)) {
+    return res.status(400).json({ error: 'Host invalido' });
+  }
+  execFile('ping', ['-c', '1', host], (err, stdout) => {
+    res.json({ salida: stdout });
   });
 });
 

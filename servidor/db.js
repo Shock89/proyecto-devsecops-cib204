@@ -11,12 +11,12 @@
 //  falla, la consulta se atrapa y el servicio sigue vivo; lo importante para
 //  el laboratorio es que SAST/CodeQL detecten la INYECCION SQL en el codigo.
 
-const mysql = require('mysql');
+const mysql = require('mysql2');
 const config = require('./config');
 
 let conexion = null;
 try {
-  conexion = mysql.createConnection(config.DATABASE_URL);
+  conexion = mysql.createConnection(config.DATABASE_URL || '');
 } catch (e) {
   conexion = null;
 }
@@ -28,11 +28,11 @@ try {
 //   La solucion son consultas parametrizadas (placeholders '?').
 //   CWE-89 (SQL Injection)
 function buscarBitacora(nombre, callback) {
-  const sql = "SELECT * FROM bitacora WHERE usuario = '" + nombre + "'";
+  const sql = 'SELECT * FROM bitacora WHERE usuario = ?';
   if (!conexion) {
     return callback(null, { sqlEjecutado: sql, filas: [] });
   }
-  conexion.query(sql, function (err, filas) {
+  conexion.query(sql, [nombre], function (err, filas) {
     if (err) {
       return callback(null, { sqlEjecutado: sql, filas: [], nota: err.code });
     }
