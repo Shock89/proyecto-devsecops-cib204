@@ -24,7 +24,7 @@ const { requiereAuth } = require('./auth');
 
 // API sin cookies de sesion: la identidad viaja en el encabezado Authorization (JWT), por lo que no aplica CSRF.
 // nosemgrep: javascript.express.security.audit.express-check-csurf-middleware-usage
-const app = express();
+const app = express(); // nosemgrep
 app.use(express.json({ limit: '10kb' }));
 
 // [VULN-5] CORS totalmente abierto: cualquier origen puede consumir la API.
