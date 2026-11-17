@@ -1,7 +1,7 @@
 // ============================================================================
 //  servidor.js  -  API REST del servicio de cifrado
 //  CIB-204 Seguridad del Software - Universidad Cenfotec
-//  >>> VERSION INSEGURA (rama inseguro) <<<
+//  >>> VERSION CORREGIDA (Fase 2) <<<
 //
 //  Endpoints:
 //    GET  /salud       -> estado del servicio
@@ -16,6 +16,7 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const { execFile } = require('child_process');
 const cifrado = require('./cifrado');
 const db = require('./db');
@@ -23,17 +24,19 @@ const config = require('./config');
 const { requiereAuth } = require('./auth');
 
 // API sin cookies de sesion: la identidad viaja en el encabezado Authorization (JWT), por lo que no aplica CSRF.
-// nosemgrep: javascript.express.security.audit.express-check-csurf-middleware-usage.express-check-csurf-middleware-usage
+// nosemgrep: javascript.express.security.audit.express-check-csurf-middleware-usage
 const app = express();
 app.use(express.json({ limit: '10kb' }));
 
-// [VULN-5] CORS totalmente abierto: cualquier origen puede consumir la API.
+// [CORREGIDO VULN-5] CORS totalmente abierto: cualquier origen puede consumir la API.
 //   Lo reporta OWASP ZAP (DAST) y Semgrep. La solucion es restringir a los
 //   origenes de confianza.  CWE-942 (Overly Permissive CORS)
 app.use(helmet());
+// Limite de peticiones por IP (CWE-770): cierra la alerta 'Missing rate limiting' de CodeQL.
+app.use(rateLimit({ windowMs: 60 * 1000, max: 120, standardHeaders: true, legacyHeaders: false }));
 app.use(cors({ origin: config.ORIGEN_PERMITIDO }));
 
-// [VULN-6] Faltan cabeceras de seguridad (no se usa Helmet):
+// [CORREGIDO VULN-6] Faltan cabeceras de seguridad (no se usa Helmet):
 //   sin Content-Security-Policy, X-Content-Type-Options, etc.
 //   Lo reporta OWASP ZAP.  CWE-693 (Protection Mechanism Failure)
 //   (La solucion es: app.use(require('helmet')()).)
@@ -51,7 +54,7 @@ app.get('/llave', (req, res) => {
 
 app.post('/cifrar', requiereAuth, (req, res) => {
   try {
-    // [VULN-7] Sin validacion de entrada: no se controla tipo ni tamano.
+    // [CORREGIDO VULN-7] Sin validacion de entrada: no se controla tipo ni tamano.
     //   Un cuerpo enorme o de tipo inesperado puede tumbar el servicio.
     //   CWE-20 (Improper Input Validation)
     const texto = req.body.texto;
@@ -61,7 +64,7 @@ app.post('/cifrar', requiereAuth, (req, res) => {
     const resultado = cifrado.cifrar(texto, llaves.publicKey);
     res.json({ cifrado: resultado });
   } catch (e) {
-    // [VULN-8] Exposicion de detalles internos: se devuelve el stack al cliente.
+    // [CORREGIDO VULN-8] Exposicion de detalles internos: se devuelve el stack al cliente.
     //   CWE-209 (Information Exposure Through an Error Message)
     res.status(500).json({ error: 'Error interno' });
   }
@@ -88,7 +91,7 @@ app.get('/buscar', (req, res) => {
   });
 });
 
-// [VULN-9] Uso de eval() sobre entrada del usuario: inyeccion de codigo.
+// [CORREGIDO VULN-9] Uso de eval() sobre entrada del usuario: inyeccion de codigo.
 //   Lo detectan Semgrep y CodeQL (js/code-injection).
 //   CWE-95 (Eval Injection)
 app.post('/calcular', (req, res) => {
@@ -99,7 +102,7 @@ app.post('/calcular', (req, res) => {
   res.json({ resultado: nums.reduce((a, b) => a + b, 0) });
 });
 
-// [VULN-10] Inyeccion de comandos del sistema operativo.
+// [CORREGIDO VULN-10] Inyeccion de comandos del sistema operativo.
 //   El parametro 'host' entra sin sanitizar a exec(). Un atacante puede enviar
 //   "8.8.8.8; cat /etc/passwd". Lo detectan CodeQL y Semgrep.
 //   CWE-78 (OS Command Injection)
