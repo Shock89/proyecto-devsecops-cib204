@@ -2,16 +2,15 @@
 //  cifrado.js  -  Modulo de cifrado RSA
 //  CIB-204 Seguridad del Software - Universidad Cenfotec
 //
-//  >>> VERSION INSEGURA (rama inseguro) <<<
-//  Este modulo contiene DEBILIDADES INTENCIONADAS con fines didacticos.
-//  El objetivo del laboratorio es que el pipeline DevSecOps las detecte y
-//  que el estudiante las corrija hasta dejar el proyecto "en verde".
+//  >>> VERSION CORREGIDA (Fase 2) <<<
+//  Las debilidades originales del laboratorio ya estan corregidas; los
+//  comentarios conservan el contexto de cada una.
 //  Cada debilidad esta marcada con el comentario:  // [VULN-n]
 // ============================================================================
 
 const crypto = require('crypto');
 
-// [VULN-1] Relleno (padding) inseguro y llave debil.
+// [CORREGIDO VULN-1] Relleno (padding) inseguro y llave debil.
 //   - Se usa RSA_PKCS1_PADDING (PKCS#1 v1.5), vulnerable a ataques de oraculo
 //     de relleno (Bleichenbacher). El estandar recomienda OAEP.
 //   - El tamano de llave (1024 bits) esta por debajo del minimo de 2048 bits

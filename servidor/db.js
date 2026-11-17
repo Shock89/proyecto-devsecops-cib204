@@ -1,6 +1,6 @@
 // ============================================================================
 //  db.js  -  Acceso a datos (bitacora de operaciones)
-//  >>> VERSION INSEGURA <<<
+//  >>> VERSION CORREGIDA (Fase 2) <<<
 // ============================================================================
 //
 //  Este modulo simula una pequena base de datos donde se guarda una bitacora
@@ -21,7 +21,7 @@ try {
   conexion = null;
 }
 
-// [VULN-3] Inyeccion de SQL por concatenacion directa de entrada del usuario.
+// [CORREGIDO VULN-3] Inyeccion de SQL por concatenacion directa de entrada del usuario.
 //   El parametro 'nombre' viaja SIN sanitizar dentro de la consulta.
 //   Un atacante puede enviar:  ' OR '1'='1  y alterar la logica.
 //   Lo detectan CodeQL (js/sql-injection) y Semgrep.
