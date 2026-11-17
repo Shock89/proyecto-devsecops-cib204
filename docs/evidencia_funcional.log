@@ -1,0 +1,19 @@
+token Keycloak obtenido: longitud 1439
+T1 GET /salud ........................ {"estado":"ok","version":"1.0"}
+T2 POST /cifrar SIN token ............ HTTP 401
+T3 POST /cifrar CON token ............ HTTP 200 {"cifrado":"dvWPGba8EH0EuqrzdpK8EshC37NM...
+T4 POST /descifrar CON token ......... {"descifrado":"Cifrado OK CIB-204"}
+T5 /descifrar dato manipulado ........ HTTP 400
+T6 /cifrar texto de 500 caracteres ... HTTP 400
+[A] POST /cifrar sin token ................ HTTP 401
+[A2] POST /cifrar con token alg=none forjado  HTTP 401
+[C] GET /diagnostico?host=8.8.8.8;id ...... {"error":"Host invalido"}
+[D] POST /calcular expresion=process.version  {"resultado":3}
+[E] GET /buscar?nombre=' OR '1'='1 ......... {"sqlEjecutado":"SELECT * FROM bitacora WHERE usuario = ?","filas":[]}
+[F] Cabeceras de seguridad:
+     Content-Security-Policy: default-src 'self';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests
+     Strict-Transport-Security: max-age=15552000; includeSubDomains
+     X-Content-Type-Options: nosniff
+     Access-Control-Allow-Origin: http://localhost:8081
+--- contenedor corre como: appuser
+--- fin ---
