@@ -24,7 +24,7 @@ const config = require('./config');
 const { requiereAuth } = require('./auth');
 
 // API sin cookies de sesion: la identidad viaja en el encabezado Authorization (JWT), por lo que no aplica CSRF.
-// nosemgrep: javascript.express.security.audit.express-check-csurf-middleware-usage
+// nosemgrep: javascript.express.security.audit.express-check-csurf-middleware-usage.express-check-csurf-middleware-usage
 const app = express();
 app.use(express.json({ limit: '10kb' }));
 
