@@ -7,10 +7,10 @@ aseguras una **aplicación móvil (cliente)** que consume un **servicio de cifra
 RSA (Node.js)** protegido con **Keycloak (IAM)** y empaquetado en un contenedor.
 Un **pipeline DevSecOps** analiza el código y la aplicación en cada cambio.
 
-> ⚠️ **Este repositorio arranca INSEGURO a propósito.** La rama `inseguro`/`main`
-> contiene vulnerabilidades intencionadas. Tu trabajo (Fase 2) es corregirlas
-> hasta que el pipeline quede **en verde**. La guía paso a paso te lleva de la
-> mano por cada corrección.
+> ✅ **Versión corregida (Fase 2).** El material original traía vulnerabilidades
+> intencionadas; aquí quedaron corregidas y el pipeline corre **en verde**. El
+> historial de commits conserva la Fase 1 (pipeline en rojo) y cada grupo de
+> correcciones por separado. La rama `main` está protegida con los seis checks.
 
 ## Arquitectura
 
